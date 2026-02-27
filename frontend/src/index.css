@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: 'Courier New', monospace;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #0a0e27;
+  color: #00f0ff;
+}
+
+code {
+  font-family: 'Courier New', monospace;
+}
+
+.cyber-glow {
+  text-shadow: 0 0 10px #00f0ff, 0 0 20px #00f0ff, 0 0 30px #00f0ff;
+}
+
+.cyber-border {
+  border: 2px solid #00f0ff;
+  box-shadow: 0 0 10px #00f0ff;
+}
+
+.cyber-button {
+  background: linear-gradient(45deg, #00f0ff, #ff00ff);
+  border: none;
+  color: #0a0e27;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cyber-button:hover {
+  box-shadow: 0 0 20px #00f0ff;
+  transform: scale(1.05);
+}
+
+.skill-node {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.skill-node:hover {
+  filter: brightness(1.5);
+}
+
+.skill-locked {
+  opacity: 0.5;
+  filter: grayscale(100%);
+}
+
+.skill-completed {
+  filter: brightness(1.3);
+}

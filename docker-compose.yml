@@ -1,0 +1,46 @@
+services:
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: cyber
+      POSTGRES_PASSWORD: cyberpass
+      POSTGRES_DB: cyberskill
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cyber"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    build: ./frontend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - frontend_build:/app/build
+    environment:
+      - REACT_APP_API_URL=/api
+    command: sh -c "npm run build && tail -f /dev/null"
+
+  backend:
+    build: ./backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://cyber:cyberpass@db:5432/cyberskill
+      SECRET_KEY: cyber-secret-key-change-in-production
+    ports:
+      - "3366:8000"
+    volumes:
+      - ./backend:/app
+      - frontend_build:/app/frontend_build
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+volumes:
+  postgres_data:
+  frontend_build:
