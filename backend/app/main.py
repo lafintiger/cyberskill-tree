@@ -30,8 +30,14 @@ app.include_router(tokens.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
 app.include_router(classes.router, prefix="/api")
 
-frontend_build_path = Path("/app/frontend_build")
-if frontend_build_path.exists():
+possible_build_paths = [
+    Path("/app/frontend_build"),
+    Path(__file__).resolve().parent.parent.parent / "frontend" / "build",
+    Path(__file__).resolve().parent.parent / "frontend_build",
+]
+frontend_build_path = next((p for p in possible_build_paths if p.exists() and (p / "index.html").exists()), None)
+
+if frontend_build_path:
     app.mount("/static", StaticFiles(directory=str(frontend_build_path / "static")), name="static")
     
     @app.get("/api")

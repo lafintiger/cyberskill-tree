@@ -10,8 +10,8 @@ ENV/
 *.db
 *.sqlite3
 node_modules/
-build/
 dist/
+!frontend/build/
 .DS_Store
 *.log
 postgres_data/
