@@ -69,6 +69,7 @@ function SkillTree({ skills, onSkillClick }) {
       })
       .attr('fill', d => {
         if (d.completed) return '#00ff41';
+        if (d.submission_status === 'pending') return '#ffaa00';
         const allDepsCompleted = d.dependencies?.every(depId => {
           const depSkill = skills.find(s => s.id === depId);
           return depSkill?.completed;
@@ -76,15 +77,17 @@ function SkillTree({ skills, onSkillClick }) {
         return allDepsCompleted ? '#00f0ff' : '#666666';
       })
       .attr('stroke', d => {
+        if (d.submission_status === 'pending') return '#ffaa00';
         if (d.level === 3) return '#ff00ff';
         if (d.level === 2) return '#ffaa00';
         return '#00f0ff';
       })
       .attr('stroke-width', 3)
-      .style('filter', d => 
-        d.completed ? 'drop-shadow(0 0 10px #00ff41)' : 
-        'drop-shadow(0 0 5px #00f0ff)'
-      );
+      .style('filter', d => {
+        if (d.completed) return 'drop-shadow(0 0 10px #00ff41)';
+        if (d.submission_status === 'pending') return 'drop-shadow(0 0 10px #ffaa00)';
+        return 'drop-shadow(0 0 5px #00f0ff)';
+      });
 
     nodes.append('text')
       .attr('text-anchor', 'middle')

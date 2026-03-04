@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, Float, Boolean, ForeignKey, TIMESTAMP, CheckConstraint
+from sqlalchemy import Column, Integer, String, Text, Float, Boolean, ForeignKey, TIMESTAMP, CheckConstraint, LargeBinary
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database.config import Base
@@ -48,8 +48,10 @@ class Skill(Base):
     position_x = Column(Float)
     position_y = Column(Float)
     active = Column(Boolean, default=True)
+    completion_type = Column(String(10), default="token")
     
     tree = relationship("Tree", back_populates="skills")
+    submissions = relationship("Submission", back_populates="skill")
     dependencies = relationship(
         "Dependency",
         foreign_keys="Dependency.skill_id",
@@ -92,6 +94,26 @@ class Token(Base):
     
     skill = relationship("Skill", back_populates="tokens")
     redeemed_user = relationship("User", back_populates="redeemed_tokens")
+
+class Submission(Base):
+    __tablename__ = "submissions"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    skill_id = Column(Integer, ForeignKey("skills.id"))
+    file_data = Column(LargeBinary, nullable=False)
+    file_name = Column(String(255), nullable=False)
+    file_type = Column(String(100), nullable=False)
+    note = Column(Text)
+    status = Column(String(20), default="pending")
+    feedback = Column(Text)
+    submitted_at = Column(TIMESTAMP, server_default=func.current_timestamp())
+    reviewed_at = Column(TIMESTAMP)
+    reviewed_by = Column(Integer, ForeignKey("users.id"))
+    
+    user = relationship("User", foreign_keys=[user_id], backref="submissions")
+    skill = relationship("Skill", back_populates="submissions")
+    reviewer = relationship("User", foreign_keys=[reviewed_by])
 
 class UserSkill(Base):
     __tablename__ = "user_skills"

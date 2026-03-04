@@ -148,4 +148,39 @@ export const classService = {
   },
 };
 
+export const submissionService = {
+  upload: async (skillId, file, note) => {
+    const formData = new FormData();
+    formData.append('skill_id', skillId);
+    formData.append('file', file);
+    if (note) formData.append('note', note);
+    const response = await api.post('/submissions/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  getMySubmissions: async () => {
+    const response = await api.get('/submissions/my');
+    return response.data;
+  },
+
+  getPendingSubmissions: async () => {
+    const response = await api.get('/submissions/pending');
+    return response.data;
+  },
+
+  reviewSubmission: async (submissionId, status, feedback) => {
+    const response = await api.post(`/submissions/${submissionId}/review`, { status, feedback });
+    return response.data;
+  },
+
+  getFile: async (submissionId) => {
+    const response = await api.get(`/submissions/${submissionId}/file`, {
+      responseType: 'blob',
+    });
+    return response;
+  },
+};
+
 export default api;

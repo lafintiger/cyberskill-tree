@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from app.database.config import engine, Base
-from app.routers import auth, trees, skills, tokens, users, classes
+from app.routers import auth, trees, skills, tokens, users, classes, submissions
 import os
 from pathlib import Path
 
@@ -29,6 +29,7 @@ app.include_router(skills.router, prefix="/api")
 app.include_router(tokens.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
 app.include_router(classes.router, prefix="/api")
+app.include_router(submissions.router, prefix="/api")
 
 possible_build_paths = [
     Path("/app/frontend_build"),

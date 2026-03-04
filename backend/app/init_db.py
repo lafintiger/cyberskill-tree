@@ -66,7 +66,8 @@ def init_db():
                 "xp": 100,
                 "position_x": 100.0,
                 "position_y": 200.0,
-                "tree_id": web_tree.id
+                "tree_id": web_tree.id,
+                "completion_type": "token"
             },
             {
                 "name": "SQL Injection Basics",
@@ -75,16 +76,18 @@ def init_db():
                 "xp": 150,
                 "position_x": 300.0,
                 "position_y": 200.0,
-                "tree_id": web_tree.id
+                "tree_id": web_tree.id,
+                "completion_type": "both"
             },
             {
                 "name": "XSS Attacks",
-                "description": "Cross-site scripting exploitation",
+                "description": "Cross-site scripting exploitation — upload a screenshot of your XSS payload firing",
                 "level": 2,
                 "xp": 200,
                 "position_x": 200.0,
                 "position_y": 350.0,
-                "tree_id": web_tree.id
+                "tree_id": web_tree.id,
+                "completion_type": "upload"
             },
             {
                 "name": "Advanced SQL Injection",
@@ -93,16 +96,18 @@ def init_db():
                 "xp": 250,
                 "position_x": 400.0,
                 "position_y": 350.0,
-                "tree_id": web_tree.id
+                "tree_id": web_tree.id,
+                "completion_type": "token"
             },
             {
                 "name": "Web Application Firewall Bypass",
-                "description": "Techniques to evade WAF protection",
+                "description": "Techniques to evade WAF protection — upload evidence of a successful bypass",
                 "level": 3,
                 "xp": 300,
                 "position_x": 300.0,
                 "position_y": 500.0,
-                "tree_id": web_tree.id
+                "tree_id": web_tree.id,
+                "completion_type": "upload"
             }
         ]
         
@@ -114,16 +119,18 @@ def init_db():
                 "xp": 100,
                 "position_x": 100.0,
                 "position_y": 200.0,
-                "tree_id": network_tree.id
+                "tree_id": network_tree.id,
+                "completion_type": "token"
             },
             {
                 "name": "Service Enumeration",
-                "description": "Identifying and fingerprinting services",
+                "description": "Identifying and fingerprinting services — upload your nmap output",
                 "level": 1,
                 "xp": 150,
                 "position_x": 300.0,
                 "position_y": 200.0,
-                "tree_id": network_tree.id
+                "tree_id": network_tree.id,
+                "completion_type": "upload"
             },
             {
                 "name": "Vulnerability Assessment",
@@ -132,7 +139,8 @@ def init_db():
                 "xp": 200,
                 "position_x": 200.0,
                 "position_y": 350.0,
-                "tree_id": network_tree.id
+                "tree_id": network_tree.id,
+                "completion_type": "both"
             }
         ]
         
@@ -156,12 +164,13 @@ def init_db():
         db.commit()
         
         for skill in all_skills:
-            for i in range(3):
-                token = models.Token(
-                    skill_id=skill.id,
-                    token_string=f"{skill.name[:3].upper()}-{generate_token()}"
-                )
-                db.add(token)
+            if skill.completion_type in ("token", "both"):
+                for i in range(3):
+                    token = models.Token(
+                        skill_id=skill.id,
+                        token_string=f"{skill.name[:3].upper()}-{generate_token()}"
+                    )
+                    db.add(token)
         
         db.commit()
         

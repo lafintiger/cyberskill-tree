@@ -24,9 +24,21 @@ def get_skills_by_tree(
         ).all()
     }
     
+    user_submissions = db.query(models.Submission).filter(
+        models.Submission.user_id == current_user.id
+    ).all()
+    latest_submission = {}
+    for s in user_submissions:
+        prev = latest_submission.get(s.skill_id)
+        if prev is None or s.submitted_at > prev.submitted_at:
+            latest_submission[s.skill_id] = s
+    
     result = []
     for skill in skills:
         dependencies = [d.depends_on_skill_id for d in skill.dependencies]
+        sub = latest_submission.get(skill.id)
+        sub_status = sub.status if sub else None
+        sub_feedback = sub.feedback if sub and sub.status == "rejected" else None
         result.append(schemas.SkillWithProgress(
             id=skill.id,
             tree_id=skill.tree_id,
@@ -37,8 +49,11 @@ def get_skills_by_tree(
             position_x=skill.position_x,
             position_y=skill.position_y,
             active=skill.active,
+            completion_type=skill.completion_type or "token",
             completed=skill.id in user_skill_ids,
-            dependencies=dependencies
+            dependencies=dependencies,
+            submission_status=sub_status,
+            submission_feedback=sub_feedback
         ))
     
     return result

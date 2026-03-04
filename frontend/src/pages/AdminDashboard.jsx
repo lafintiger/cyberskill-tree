@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
-import { 
-  treeService, 
-  skillService, 
-  tokenService, 
+import {
+  treeService,
+  skillService,
+  tokenService,
   userService,
-  classService 
+  classService,
+  submissionService
 } from '../services/api';
 
 function AdminDashboard() {
@@ -16,6 +17,10 @@ function AdminDashboard() {
   const [tokens, setTokens] = useState([]);
   const [users, setUsers] = useState([]);
   const [classes, setClasses] = useState([]);
+  const [pendingSubmissions, setPendingSubmissions] = useState([]);
+  const [expandedSubmission, setExpandedSubmission] = useState(null);
+  const [reviewFeedback, setReviewFeedback] = useState('');
+  const [filePreview, setFilePreview] = useState(null);
   const [message, setMessage] = useState({ type: '', text: '' });
 
   const [newSkill, setNewSkill] = useState({
@@ -25,7 +30,8 @@ function AdminDashboard() {
     xp: 100,
     position_x: 200,
     position_y: 200,
-    tree_id: null
+    tree_id: null,
+    completion_type: 'token'
   });
 
   const [newToken, setNewToken] = useState({
@@ -50,18 +56,20 @@ function AdminDashboard() {
 
   const loadData = async () => {
     try {
-      const [treesData, usersData, classesData, tokensData] = await Promise.all([
+      const [treesData, usersData, classesData, tokensData, subsData] = await Promise.all([
         treeService.getTrees(),
         userService.getUsers(),
         classService.getClasses(),
-        tokenService.getTokens()
+        tokenService.getTokens(),
+        submissionService.getPendingSubmissions()
       ]);
-      
+
       setTrees(treesData);
       setUsers(usersData);
       setClasses(classesData);
       setTokens(tokensData);
-      
+      setPendingSubmissions(subsData);
+
       if (treesData.length > 0) {
         setSelectedTree(treesData[0]);
         setNewSkill(prev => ({ ...prev, tree_id: treesData[0].id }));
@@ -94,7 +102,8 @@ function AdminDashboard() {
         xp: 100,
         position_x: 200,
         position_y: 200,
-        tree_id: selectedTree.id
+        tree_id: selectedTree.id,
+        completion_type: 'token'
       });
     } catch (error) {
       setMessage({ type: 'error', text: 'Failed to create skill' });
@@ -136,31 +145,91 @@ function AdminDashboard() {
     setNewToken(prev => ({ ...prev, token_string: token }));
   };
 
+  const handleExpandSubmission = async (sub) => {
+    if (expandedSubmission?.id === sub.id) {
+      setExpandedSubmission(null);
+      setFilePreview(null);
+      setReviewFeedback('');
+      return;
+    }
+    setExpandedSubmission(sub);
+    setReviewFeedback('');
+    setFilePreview(null);
+
+    if (sub.file_type.startsWith('image/')) {
+      try {
+        const response = await submissionService.getFile(sub.id);
+        const url = URL.createObjectURL(response.data);
+        setFilePreview(url);
+      } catch (error) {
+        console.error('Error loading file preview:', error);
+      }
+    }
+  };
+
+  const handleReview = async (submissionId, status) => {
+    try {
+      await submissionService.reviewSubmission(submissionId, status, reviewFeedback);
+      setMessage({
+        type: 'success',
+        text: `Submission ${status}!`
+      });
+      setExpandedSubmission(null);
+      setFilePreview(null);
+      setReviewFeedback('');
+      const subsData = await submissionService.getPendingSubmissions();
+      setPendingSubmissions(subsData);
+    } catch (error) {
+      setMessage({ type: 'error', text: error.response?.data?.detail || 'Review failed' });
+    }
+  };
+
+  const handleDownloadFile = async (sub) => {
+    try {
+      const response = await submissionService.getFile(sub.id);
+      const url = URL.createObjectURL(response.data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = sub.file_name;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading file:', error);
+    }
+  };
+
+  const tabs = ['skills', 'tokens', 'reviews', 'users', 'classes'];
+
   return (
     <div className="min-h-screen bg-cyber-bg">
       <Header />
-      
+
       <div className="container mx-auto px-4 py-6">
         <div className="mb-6 flex gap-2">
-          {['skills', 'tokens', 'users', 'classes'].map(tab => (
+          {tabs.map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-6 py-3 rounded font-bold transition uppercase ${
+              className={`px-6 py-3 rounded font-bold transition uppercase relative ${
                 activeTab === tab
                   ? 'cyber-button'
                   : 'bg-cyber-card text-cyber-accent border-2 border-cyber-accent'
               }`}
             >
               {tab}
+              {tab === 'reviews' && pendingSubmissions.length > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold">
+                  {pendingSubmissions.length}
+                </span>
+              )}
             </button>
           ))}
         </div>
 
         {message.text && (
           <div className={`mb-4 p-4 rounded border ${
-            message.type === 'success' 
-              ? 'bg-green-900/50 border-green-500 text-green-200' 
+            message.type === 'success'
+              ? 'bg-green-900/50 border-green-500 text-green-200'
               : 'bg-red-900/50 border-red-500 text-red-200'
           }`}>
             {message.text}
@@ -171,7 +240,7 @@ function AdminDashboard() {
           <div className="grid grid-cols-2 gap-6">
             <div className="bg-cyber-card p-6 rounded-lg border-2 border-cyber-accent">
               <h2 className="text-2xl font-bold text-cyber-accent mb-4">CREATE SKILL</h2>
-              
+
               <div className="mb-4">
                 <label className="block text-sm text-gray-400 mb-2">Tree</label>
                 <select
@@ -211,7 +280,7 @@ function AdminDashboard() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 mb-3">
+                <div className="grid grid-cols-3 gap-3 mb-3">
                   <div>
                     <label className="block text-sm text-gray-400 mb-1">Level</label>
                     <select
@@ -232,6 +301,18 @@ function AdminDashboard() {
                       onChange={(e) => setNewSkill({ ...newSkill, xp: parseInt(e.target.value) })}
                       className="w-full px-3 py-2 bg-cyber-bg border border-cyber-accent rounded text-white"
                     />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Completion</label>
+                    <select
+                      value={newSkill.completion_type}
+                      onChange={(e) => setNewSkill({ ...newSkill, completion_type: e.target.value })}
+                      className="w-full px-3 py-2 bg-cyber-bg border border-cyber-accent rounded text-white"
+                    >
+                      <option value="token">Token</option>
+                      <option value="upload">Upload</option>
+                      <option value="both">Both</option>
+                    </select>
                   </div>
                 </div>
 
@@ -273,6 +354,9 @@ function AdminDashboard() {
                       <div className="mt-2 flex gap-2">
                         <span className="text-xs px-2 py-1 bg-cyber-secondary rounded">L{skill.level}</span>
                         <span className="text-xs px-2 py-1 bg-cyber-warning text-cyber-bg rounded">{skill.xp} XP</span>
+                        <span className="text-xs px-2 py-1 bg-cyber-bg border border-gray-600 text-gray-400 rounded uppercase">
+                          {skill.completion_type}
+                        </span>
                         {skill.completed && (
                           <span className="text-xs px-2 py-1 bg-cyber-success text-cyber-bg rounded">UNLOCKED</span>
                         )}
@@ -289,7 +373,7 @@ function AdminDashboard() {
           <div className="grid grid-cols-2 gap-6">
             <div className="bg-cyber-card p-6 rounded-lg border-2 border-cyber-accent">
               <h2 className="text-2xl font-bold text-cyber-accent mb-4">CREATE TOKEN</h2>
-              
+
               <form onSubmit={handleCreateToken}>
                 <div className="mb-3">
                   <label className="block text-sm text-gray-400 mb-1">Skill</label>
@@ -352,6 +436,101 @@ function AdminDashboard() {
           </div>
         )}
 
+        {activeTab === 'reviews' && (
+          <div className="bg-cyber-card p-6 rounded-lg border-2 border-cyber-accent">
+            <h2 className="text-2xl font-bold text-cyber-accent mb-4">
+              PENDING REVIEWS ({pendingSubmissions.length})
+            </h2>
+
+            {pendingSubmissions.length === 0 ? (
+              <p className="text-gray-400 text-center py-8">No pending submissions to review.</p>
+            ) : (
+              <div className="space-y-3">
+                {pendingSubmissions.map(sub => (
+                  <div key={sub.id} className="bg-cyber-bg rounded border border-cyber-accent">
+                    <div
+                      className="p-4 cursor-pointer hover:bg-cyber-card/50 transition flex justify-between items-center"
+                      onClick={() => handleExpandSubmission(sub)}
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-1">
+                          <span className="font-bold text-cyber-accent">{sub.skill_name}</span>
+                          <span className="text-xs px-2 py-1 bg-cyber-warning text-cyber-bg rounded font-bold">PENDING</span>
+                        </div>
+                        <div className="text-sm text-gray-400">
+                          Submitted by <span className="text-white">{sub.user_name}</span> on {new Date(sub.submitted_at).toLocaleString()}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          File: {sub.file_name} ({sub.file_type})
+                        </div>
+                      </div>
+                      <span className="text-cyber-accent text-xl">
+                        {expandedSubmission?.id === sub.id ? '▲' : '▼'}
+                      </span>
+                    </div>
+
+                    {expandedSubmission?.id === sub.id && (
+                      <div className="p-4 border-t border-cyber-accent">
+                        {sub.note && (
+                          <div className="mb-3">
+                            <p className="text-sm text-gray-400 mb-1">Student Note:</p>
+                            <p className="text-white bg-cyber-card p-2 rounded">{sub.note}</p>
+                          </div>
+                        )}
+
+                        <div className="mb-3">
+                          <p className="text-sm text-gray-400 mb-2">Uploaded File:</p>
+                          {filePreview && sub.file_type.startsWith('image/') ? (
+                            <img
+                              src={filePreview}
+                              alt="Submission"
+                              className="max-w-full max-h-64 rounded border border-cyber-accent mb-2"
+                            />
+                          ) : (
+                            <p className="text-gray-300 text-sm">{sub.file_name} ({sub.file_type})</p>
+                          )}
+                          <button
+                            onClick={() => handleDownloadFile(sub)}
+                            className="text-sm px-4 py-1 bg-cyber-accent text-cyber-bg rounded font-bold mt-1"
+                          >
+                            DOWNLOAD FILE
+                          </button>
+                        </div>
+
+                        <div className="mb-3">
+                          <label className="block text-sm text-gray-400 mb-1">Feedback (optional)</label>
+                          <textarea
+                            value={reviewFeedback}
+                            onChange={(e) => setReviewFeedback(e.target.value)}
+                            placeholder="Provide feedback to the student..."
+                            rows="2"
+                            className="w-full px-3 py-2 bg-cyber-bg border border-cyber-accent rounded text-white text-sm"
+                          />
+                        </div>
+
+                        <div className="flex gap-3">
+                          <button
+                            onClick={() => handleReview(sub.id, 'approved')}
+                            className="flex-1 py-2 bg-cyber-success text-cyber-bg rounded font-bold hover:opacity-90"
+                          >
+                            APPROVE
+                          </button>
+                          <button
+                            onClick={() => handleReview(sub.id, 'rejected')}
+                            className="flex-1 py-2 bg-red-600 text-white rounded font-bold hover:opacity-90"
+                          >
+                            REJECT
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {activeTab === 'users' && (
           <div className="bg-cyber-card p-6 rounded-lg border-2 border-cyber-accent">
             <h2 className="text-2xl font-bold text-cyber-accent mb-4">USERS</h2>
@@ -390,7 +569,7 @@ function AdminDashboard() {
           <div className="grid grid-cols-2 gap-6">
             <div className="bg-cyber-card p-6 rounded-lg border-2 border-cyber-accent">
               <h2 className="text-2xl font-bold text-cyber-accent mb-4">CREATE CLASS</h2>
-              
+
               <form onSubmit={handleCreateClass}>
                 <div className="mb-3">
                   <label className="block text-sm text-gray-400 mb-1">Name</label>

@@ -64,6 +64,7 @@ class SkillBase(BaseModel):
     position_x: float
     position_y: float
     active: bool = True
+    completion_type: str = "token"
 
 class SkillCreate(SkillBase):
     tree_id: int
@@ -124,3 +125,27 @@ class UserProgressResponse(BaseModel):
 class SkillWithProgress(SkillResponse):
     completed: bool = False
     dependencies: List[int] = []
+    submission_status: Optional[str] = None
+    submission_feedback: Optional[str] = None
+
+class SubmissionResponse(BaseModel):
+    id: int
+    user_id: int
+    skill_id: int
+    file_name: str
+    file_type: str
+    note: Optional[str]
+    status: str
+    feedback: Optional[str]
+    submitted_at: datetime
+    reviewed_at: Optional[datetime]
+    reviewed_by: Optional[int]
+    user_name: Optional[str] = None
+    skill_name: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
+
+class SubmissionReview(BaseModel):
+    status: str
+    feedback: Optional[str] = None
