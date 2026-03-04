@@ -17,7 +17,6 @@ function Login() {
     try {
       await authService.login(email, password);
       const user = await authService.getCurrentUser();
-      
       if (user.role === 'admin') {
         navigate('/admin');
       } else {
@@ -31,60 +30,91 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-cyber-bg">
-      <div className="bg-cyber-card p-8 rounded-lg cyber-border max-w-md w-full">
-        <h1 className="text-4xl font-bold text-center mb-2 cyber-glow">
-          CYBERSKILL TREE
-        </h1>
-        <p className="text-center text-cyber-accent mb-8">
-          Initialize Neural Link
-        </p>
+    <div className="min-h-screen flex items-center justify-center cyber-grid-bg relative">
+      {/* Animated gradient orbs */}
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyber-accent/5 rounded-full blur-3xl animate-pulse-slow" />
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyber-secondary/5 rounded-full blur-3xl animate-pulse-slow" style={{animationDelay: '2s'}} />
 
-        {error && (
-          <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded mb-4">
-            {error}
+      <div className="relative z-10 w-full max-w-md mx-4">
+        {/* Logo area */}
+        <div className="text-center mb-8 animate-float">
+          <div className="inline-block p-4 rounded-2xl bg-cyber-accent/5 border border-cyber-accent/20 mb-6">
+            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" className="mx-auto">
+              <path d="M24 4L42 14V34L24 44L6 34V14L24 4Z" stroke="#00e5ff" strokeWidth="2" fill="#00e5ff11"/>
+              <path d="M24 12L34 18V30L24 36L14 30V18L24 12Z" stroke="#d946ef" strokeWidth="1.5" fill="#d946ef11"/>
+              <circle cx="24" cy="24" r="4" fill="#00e5ff"/>
+            </svg>
           </div>
-        )}
-
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block text-cyber-accent mb-2">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 bg-cyber-bg border border-cyber-accent rounded focus:outline-none focus:border-cyber-secondary text-white"
-              placeholder="operator@cyber.net"
-              required
-            />
-          </div>
-
-          <div className="mb-6">
-            <label className="block text-cyber-accent mb-2">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 bg-cyber-bg border border-cyber-accent rounded focus:outline-none focus:border-cyber-secondary text-white"
-              placeholder="••••••••"
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full py-3 cyber-button rounded font-bold text-lg"
-          >
-            {isLoading ? 'CONNECTING...' : 'JACK IN'}
-          </button>
-        </form>
-
-        <div className="mt-4 text-center text-sm text-gray-400">
-          <p>Test Credentials:</p>
-          <p>Admin: admin@cyber.edu / admin123</p>
-          <p>Student: student@cyber.edu / student123</p>
+          <h1 className="text-4xl font-display font-black tracking-wider cyber-glow mb-2" style={{color: '#00e5ff'}}>
+            CYBERSKILL
+          </h1>
+          <p className="text-lg font-display tracking-[0.3em] text-cyber-secondary font-light">
+            TREE
+          </p>
         </div>
+
+        {/* Login card */}
+        <div className="cyber-card rounded-2xl p-8 cyber-scanline">
+          <p className="text-center text-sm font-mono text-cyber-accent/60 mb-6 tracking-widest uppercase">
+            Initialize Neural Link
+          </p>
+
+          {error && (
+            <div className="mb-6 p-4 rounded-lg bg-cyber-danger/10 border border-cyber-danger/30 text-cyber-danger text-sm font-body">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit}>
+            <div className="mb-5">
+              <label className="cyber-label">Operator ID</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="cyber-input"
+                placeholder="operator@cyber.net"
+                required
+              />
+            </div>
+
+            <div className="mb-8">
+              <label className="cyber-label">Access Key</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="cyber-input"
+                placeholder="••••••••••"
+                required
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full py-4 cyber-button rounded-lg text-sm disabled:opacity-50"
+            >
+              {isLoading ? 'ESTABLISHING CONNECTION...' : 'JACK IN'}
+            </button>
+          </form>
+
+          <div className="mt-6 pt-6 border-t border-white/5">
+            <p className="text-center text-xs font-mono text-white/20 mb-2">TEST CREDENTIALS</p>
+            <div className="grid grid-cols-2 gap-3 text-xs font-mono text-white/30">
+              <div className="p-2 rounded bg-white/3 text-center">
+                <span className="text-cyber-accent/50">admin</span>@cyber.edu<br/>admin123
+              </div>
+              <div className="p-2 rounded bg-white/3 text-center">
+                <span className="text-cyber-secondary/50">student</span>@cyber.edu<br/>student123
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <p className="text-center text-xs font-mono text-white/10 mt-8 tracking-widest">
+          v1.0 // SECURED CHANNEL
+        </p>
       </div>
     </div>
   );
